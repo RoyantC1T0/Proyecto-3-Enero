@@ -120,16 +120,16 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{t("dashboard")}</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold">{t("dashboard")}</h1>
+          <p className="text-sm text-muted-foreground">
             {formatDate(new Date(), "long")}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -144,30 +144,35 @@ export default function DashboardPage() {
           <Button variant="outline" size="sm" onClick={toggleCurrency}>
             {displayCurrency}
           </Button>
-          <Button variant="outline" size="icon" onClick={() => refetch()}>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => refetch()}
+          >
             <RefreshCcw className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Balance Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         {/* Main Balance */}
-        <Card className="md:col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <Card className="col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               {t("monthlyBalance")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-baseline gap-2">
               <span
-                className={`text-4xl font-bold ${isPositiveBalance ? "text-success" : "text-destructive"}`}
+                className={`text-2xl sm:text-3xl lg:text-4xl font-bold truncate ${isPositiveBalance ? "text-success" : "text-destructive"}`}
               >
                 {formatCurrency(balanceData.netBalance, displayCurrency)}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
               {blueRate && displayCurrency === "ARS" && (
                 <>Dólar Blue: ${blueRate.venta}</>
               )}
@@ -176,41 +181,41 @@ export default function DashboardPage() {
         </Card>
 
         {/* Blue Dollar Rate */}
-        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20">
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
-              Dólar Blue
+        <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20 overflow-hidden">
+          <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+              <span className="truncate">Dólar Blue</span>
             </CardTitle>
             <Button
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="h-6 w-6 flex-shrink-0"
               onClick={refetchBlue}
             >
               <RefreshCcw className="h-3 w-3" />
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             {blueRate ? (
               <div className="space-y-1">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">
                     {t("buy")}
                   </span>
-                  <span className="text-lg font-bold text-green-600">
+                  <span className="text-sm sm:text-lg font-bold text-green-600">
                     ${blueRate.compra.toLocaleString("es-AR")}
                   </span>
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">
                     {t("sell")}
                   </span>
-                  <span className="text-lg font-bold text-green-600">
+                  <span className="text-sm sm:text-lg font-bold text-green-600">
                     ${blueRate.venta.toLocaleString("es-AR")}
                   </span>
                 </div>
-                <p className="text-[10px] text-muted-foreground pt-1">
+                <p className="text-[9px] sm:text-[10px] text-muted-foreground pt-1 truncate">
                   {new Date(blueRate.fechaActualizacion).toLocaleString(
                     "es-AR",
                     {
@@ -223,7 +228,7 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-xs sm:text-sm">
                 {t("loading")}
               </span>
             )}
@@ -231,30 +236,30 @@ export default function DashboardPage() {
         </Card>
 
         {/* Income */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-success" />
-              {t("income")}
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-success flex-shrink-0" />
+              <span className="truncate">{t("income")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-success">
+            <span className="text-lg sm:text-xl lg:text-2xl font-bold text-success truncate block">
               {formatCurrency(balanceData.income, displayCurrency)}
             </span>
           </CardContent>
         </Card>
 
         {/* Expenses */}
-        <Card>
+        <Card className="overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <ArrowDownRight className="h-4 w-4 text-destructive" />
-              {t("expenses")}
+            <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
+              <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-destructive flex-shrink-0" />
+              <span className="truncate">{t("expenses")}</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <span className="text-2xl font-bold text-destructive">
+            <span className="text-lg sm:text-xl lg:text-2xl font-bold text-destructive truncate block">
               {formatCurrency(balanceData.expenses, displayCurrency)}
             </span>
           </CardContent>

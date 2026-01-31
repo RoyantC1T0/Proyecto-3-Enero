@@ -28,8 +28,8 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <main className="md:pl-64">
-        <div className="p-4 md:p-8">{children}</div>
+      <main className="md:pl-64 overflow-x-hidden">
+        <div className="p-4 pt-16 md:pt-8 md:p-8 max-w-full">{children}</div>
       </main>
       <VoiceButton />
       <CurrencyCalculator />

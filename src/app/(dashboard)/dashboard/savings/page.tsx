@@ -178,7 +178,7 @@ export default function SavingsPage() {
       </div>
 
       {/* Summary Cards - Separated by Currency */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {/* USD Totals */}
         <Card className="bg-gradient-to-br from-green-500/10 to-emerald-500/5 border-green-500/20">
           <CardHeader className="pb-2">

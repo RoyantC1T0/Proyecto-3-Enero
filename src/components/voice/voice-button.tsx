@@ -74,11 +74,11 @@ export function VoiceButton({
 
   return (
     <>
-      {/* Floating Voice Button */}
+      {/* Floating Voice Button - positioned to the left of calculator */}
       <Button
         onClick={handleOpen}
         size="icon"
-        className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 z-40"
+        className="fixed bottom-6 right-24 h-14 w-14 rounded-full shadow-lg bg-gradient-to-br from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 z-40"
       >
         <Mic className="h-6 w-6" />
       </Button>
@@ -198,7 +198,7 @@ export function VoiceButton({
                 Tap the microphone and speak your command
                 <br />
                 <span className="text-xs">
-                  Example: "Gasté 5000 pesos en el super"
+                  Example: &quot;Gasté 5000 pesos en el super&quot;
                 </span>
               </p>
             )}

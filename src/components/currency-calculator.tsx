@@ -128,7 +128,7 @@ export function CurrencyCalculator() {
 
       {/* Calculator Modal */}
       {isOpen && (
-        <Card className="fixed bottom-24 right-6 w-80 shadow-2xl z-50 border-2 animate-in slide-in-from-bottom-4 duration-200">
+        <Card className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-80 shadow-2xl z-50 border-2 animate-in slide-in-from-bottom-4 duration-200">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">

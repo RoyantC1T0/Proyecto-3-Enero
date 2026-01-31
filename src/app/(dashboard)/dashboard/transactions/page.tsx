@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -212,7 +212,7 @@ export default function TransactionsPage() {
               value={filter.type}
               onValueChange={(value) => setFilter({ ...filter, type: value })}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by type" />
               </SelectTrigger>
@@ -238,11 +238,11 @@ export default function TransactionsPage() {
               {filteredTransactions.map((tx) => (
                 <div
                   key={tx.transaction_id}
-                  className="flex items-center justify-between p-4 hover:bg-muted/50"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 hover:bg-muted/50 gap-3"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+                      className="w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center text-lg"
                       style={{
                         backgroundColor: tx.category_color + "20",
                         color: tx.category_color,
@@ -250,17 +250,17 @@ export default function TransactionsPage() {
                     >
                       {tx.transaction_type === "income" ? "↑" : "↓"}
                     </div>
-                    <div>
-                      <p className="font-medium">{tx.category_name}</p>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium truncate">{tx.category_name}</p>
+                      <p className="text-sm text-muted-foreground truncate">
                         {tx.description ||
                           formatDate(tx.transaction_date, "short")}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4 pl-13 sm:pl-0">
                     <span
-                      className={`font-semibold ${
+                      className={`font-semibold text-sm sm:text-base ${
                         tx.transaction_type === "income"
                           ? "text-success"
                           : "text-destructive"
@@ -273,6 +273,7 @@ export default function TransactionsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        className="h-8 w-8"
                         onClick={() => handleEdit(tx)}
                       >
                         <Edit className="h-4 w-4" />
@@ -280,7 +281,7 @@ export default function TransactionsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-destructive hover:text-destructive"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => handleDelete(tx.transaction_id)}
                       >
                         <Trash2 className="h-4 w-4" />
