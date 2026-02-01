@@ -115,6 +115,21 @@ export const balanceApi = {
       method: "POST",
       body: JSON.stringify({ monthly_income }),
     }),
+
+  closeBalance: () =>
+    fetchAPI<{
+      success: boolean;
+      closed_at: string;
+      summary: {
+        total_income: number;
+        total_expenses: number;
+        net_balance: number;
+        transactions_count: number;
+        accumulated_balance: number;
+      };
+    }>("/balance/close", { method: "POST" }),
+
+  getClosureHistory: () => fetchAPI<{ closures: object[] }>("/balance/close"),
 };
 
 // Savings API

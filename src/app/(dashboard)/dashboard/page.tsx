@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useBalance } from "@/hooks/use-balance";
+import { useBalanceContext } from "@/components/balance-provider";
 import { useCurrency } from "@/hooks/use-currency";
 import { useBlueRate } from "@/hooks/use-blue-rate";
 import { useLanguage } from "@/components/language-provider";
@@ -20,6 +20,7 @@ import {
   ArrowRight,
   DollarSign,
   Languages,
+  CheckCircle,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -58,7 +59,7 @@ interface TrendData {
 }
 
 export default function DashboardPage() {
-  const { balance, refetch } = useBalance();
+  const { balance, refetch, closeBalance } = useBalanceContext();
   const { displayCurrency, toggleCurrency } = useCurrency();
   const { blueRate, refetch: refetchBlue } = useBlueRate();
   const { language, setLanguage, t } = useLanguage();
@@ -152,6 +153,28 @@ export default function DashboardPage() {
           >
             <RefreshCcw className="h-4 w-4" />
           </Button>
+          <Button
+            variant="default"
+            size="sm"
+            className="bg-green-600 hover:bg-green-700"
+            onClick={async () => {
+              if (
+                confirm(
+                  "¿Estás seguro de cerrar el balance actual? Esto iniciará un nuevo período.",
+                )
+              ) {
+                const result = await closeBalance();
+                if (result.success) {
+                  alert(
+                    "Balance cerrado exitosamente. Iniciando nuevo período.",
+                  );
+                }
+              }
+            }}
+          >
+            <CheckCircle className="h-4 w-4 mr-1" />
+            {language === "es" ? "Cerrar Balance" : "Close Balance"}
+          </Button>
         </div>
       </div>
 
@@ -160,8 +183,11 @@ export default function DashboardPage() {
         {/* Main Balance */}
         <Card className="col-span-2 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 overflow-hidden">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-2">
               {t("monthlyBalance")}
+              <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] sm:text-xs font-semibold">
+                {displayCurrency}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -241,6 +267,9 @@ export default function DashboardPage() {
             <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
               <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 text-success flex-shrink-0" />
               <span className="truncate">{t("income")}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-success/20 text-success text-[9px] sm:text-[10px] font-semibold ml-auto">
+                {displayCurrency}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -256,6 +285,9 @@ export default function DashboardPage() {
             <CardTitle className="text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
               <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 text-destructive flex-shrink-0" />
               <span className="truncate">{t("expenses")}</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-destructive/20 text-destructive text-[9px] sm:text-[10px] font-semibold ml-auto">
+                {displayCurrency}
+              </span>
             </CardTitle>
           </CardHeader>
           <CardContent>

@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { query, queryOne } from "@/lib/db";
 import { authenticateRequest } from "@/lib/auth";
 import { getBlueRate } from "@/lib/currency";
-import { UserBalanceCache } from "@/types/database";
 
-// GET - Get current balance
+// GET - Get current balance (calculated from transactions since last closure)
 export async function GET(request: NextRequest) {
   try {
     const auth = await authenticateRequest(request);
@@ -12,48 +11,62 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get cached balance
-    const balance = await queryOne<
-      UserBalanceCache & { monthly_income: number | null }
-    >(
-      `SELECT ubc.*, up.monthly_income 
-       FROM user_balance_cache ubc
-       LEFT JOIN user_preferences up ON ubc.user_id = up.user_id
-       WHERE ubc.user_id = $1`,
+    // Get the last closure date
+    const lastClosure = await queryOne<{
+      closure_date: string;
+      accumulated_balance: string;
+    }>(
+      `SELECT closure_date, accumulated_balance FROM month_closures WHERE user_id = $1 ORDER BY closure_date DESC LIMIT 1`,
       [auth.userId],
     );
 
-    if (!balance) {
-      return NextResponse.json({
-        current_month_income: 0,
-        current_month_expenses: 0,
-        current_month_balance: 0,
-        total_savings: 0,
-        currency_code: "USD",
-        conversions: {
-          USD: { income: 0, expenses: 0, balance: 0 },
-          ARS: { income: 0, expenses: 0, balance: 0 },
-        },
-        last_updated: new Date().toISOString(),
-      });
+    // Build query to get transactions since last closure (or all if no closure exists)
+    let statsQuery = `
+      SELECT 
+        COALESCE(SUM(CASE WHEN transaction_type = 'income' THEN base_amount ELSE 0 END), 0) as income,
+        COALESCE(SUM(CASE WHEN transaction_type = 'expense' THEN base_amount ELSE 0 END), 0) as expenses
+       FROM transactions
+       WHERE user_id = $1`;
+
+    const params: (number | string)[] = [auth.userId];
+
+    if (lastClosure?.closure_date) {
+      statsQuery += ` AND created_at > $2`;
+      params.push(lastClosure.closure_date);
     }
 
-    // Get Blue Dollar rate for ARS conversion (using "venta" price)
+    const monthlyStats = await queryOne<{
+      income: string;
+      expenses: string;
+    }>(statsQuery, params);
+
+    const previousAccumulated = parseFloat(
+      lastClosure?.accumulated_balance || "0",
+    );
+
+    // Get user's monthly base income from preferences
+    const userPrefs = await queryOne<{ monthly_income: number | null }>(
+      `SELECT monthly_income FROM user_preferences WHERE user_id = $1`,
+      [auth.userId],
+    );
+
+    // Get Blue Dollar rate for ARS conversion
     let arsRate = 1;
     let blueRateInfo = null;
     try {
       const blueRate = await getBlueRate();
-      arsRate = blueRate.venta; // Use "venta" (sell) price for USD → ARS
+      arsRate = blueRate.venta;
       blueRateInfo = blueRate;
     } catch (error) {
       console.warn("Could not fetch Blue Dollar rate, using fallback:", error);
       arsRate = 1;
     }
 
-    const monthlyIncome = Number(balance.monthly_income) || 0;
-    const income = Number(balance.current_month_income) + monthlyIncome;
-    const expenses = Number(balance.current_month_expenses);
-    const netBalance = income - expenses;
+    const monthlyBaseIncome = Number(userPrefs?.monthly_income) || 0;
+    const transactionIncome = parseFloat(monthlyStats?.income || "0");
+    const expenses = parseFloat(monthlyStats?.expenses || "0");
+    const totalIncome = transactionIncome + monthlyBaseIncome;
+    const netBalance = totalIncome - expenses;
 
     // Calculate total savings
     const savingsResult = await queryOne<{ total: string }>(
@@ -63,22 +76,24 @@ export async function GET(request: NextRequest) {
     const totalSavings = parseFloat(savingsResult?.total || "0");
 
     return NextResponse.json({
-      current_month_income: income,
+      current_month_income: totalIncome,
       current_month_expenses: expenses,
       current_month_balance: netBalance,
-      monthly_base_income: monthlyIncome,
-      extra_income: Number(balance.current_month_income),
+      monthly_base_income: monthlyBaseIncome,
+      extra_income: transactionIncome,
       total_savings: totalSavings,
-      currency_code: balance.currency_code,
+      accumulated_balance: previousAccumulated,
+      last_closure_date: lastClosure?.closure_date || null,
+      currency_code: "USD",
       conversions: {
         USD: {
-          income,
+          income: totalIncome,
           expenses,
           balance: netBalance,
           savings: totalSavings,
         },
         ARS: {
-          income: income * arsRate,
+          income: totalIncome * arsRate,
           expenses: expenses * arsRate,
           balance: netBalance * arsRate,
           savings: totalSavings * arsRate,
@@ -89,7 +104,7 @@ export async function GET(request: NextRequest) {
         blue_dollar: blueRateInfo,
         updated_at: new Date().toISOString(),
       },
-      last_updated: balance.last_updated,
+      last_updated: new Date().toISOString(),
     });
   } catch (error) {
     console.error("Get balance error:", error);

@@ -20,6 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { transactionsApi, categoriesApi } from "@/lib/api-client";
+import { useBalanceContext } from "@/components/balance-provider";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { Plus, Search, Filter, Trash2, Edit, Loader2 } from "lucide-react";
 
@@ -45,6 +46,7 @@ interface Category {
 }
 
 export default function TransactionsPage() {
+  const { refetch: refetchBalance } = useBalanceContext();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -110,6 +112,7 @@ export default function TransactionsPage() {
       setEditingTx(null);
       resetForm();
       fetchData();
+      refetchBalance();
     } catch (error) {
       console.error("Error saving transaction:", error);
     } finally {
@@ -123,6 +126,7 @@ export default function TransactionsPage() {
     try {
       await transactionsApi.delete(id);
       fetchData();
+      refetchBalance();
     } catch (error) {
       console.error("Error deleting transaction:", error);
     }

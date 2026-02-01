@@ -74,6 +74,10 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const values: unknown[] = [];
     let paramIndex = 1;
 
+    if (body.transaction_type !== undefined) {
+      updates.push(`transaction_type = $${paramIndex++}`);
+      values.push(body.transaction_type);
+    }
     if (body.category_id !== undefined) {
       updates.push(`category_id = $${paramIndex++}`);
       values.push(body.category_id);
@@ -182,31 +186,51 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
 // Helper function to update balance cache
 async function updateBalanceCache(userId: number) {
-  const monthStart = new Date();
-  monthStart.setDate(1);
-  monthStart.setHours(0, 0, 0, 0);
-  const monthStartStr = monthStart.toISOString().split("T")[0];
+  // Get first day of current month in YYYY-MM-DD format
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
   await query(
-    `UPDATE user_balance_cache SET
-      current_month_income = COALESCE((
-        SELECT SUM(base_amount) FROM transactions 
-        WHERE user_id = $1 AND transaction_type = 'income'
-        AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
-      ), 0),
-      current_month_expenses = COALESCE((
-        SELECT SUM(base_amount) FROM transactions 
-        WHERE user_id = $1 AND transaction_type = 'expense'
-        AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
-      ), 0),
-      current_month_balance = COALESCE((
-        SELECT SUM(CASE WHEN transaction_type = 'income' THEN base_amount ELSE -base_amount END)
-        FROM transactions 
-        WHERE user_id = $1 
-        AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
-      ), 0) + COALESCE((SELECT monthly_income FROM user_preferences WHERE user_id = $1), 0),
-      last_updated = CURRENT_TIMESTAMP
-    WHERE user_id = $1`,
-    [userId, monthStartStr],
+    `INSERT INTO user_balance_cache (user_id, currency_code, current_month_income, current_month_expenses, current_month_balance, last_updated)
+     VALUES (
+       $1,
+       'USD',
+       COALESCE((
+         SELECT SUM(base_amount) FROM transactions 
+         WHERE user_id = $1 AND transaction_type = 'income'
+         AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
+       ), 0),
+       COALESCE((
+         SELECT SUM(base_amount) FROM transactions 
+         WHERE user_id = $1 AND transaction_type = 'expense'
+         AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
+       ), 0),
+       COALESCE((
+         SELECT SUM(CASE WHEN transaction_type = 'income' THEN base_amount ELSE -base_amount END)
+         FROM transactions 
+         WHERE user_id = $1 
+         AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
+       ), 0) + COALESCE((SELECT monthly_income FROM user_preferences WHERE user_id = $1), 0),
+       CURRENT_TIMESTAMP
+     )
+     ON CONFLICT (user_id) DO UPDATE SET
+       current_month_income = COALESCE((
+         SELECT SUM(base_amount) FROM transactions 
+         WHERE user_id = $1 AND transaction_type = 'income'
+         AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
+       ), 0),
+       current_month_expenses = COALESCE((
+         SELECT SUM(base_amount) FROM transactions 
+         WHERE user_id = $1 AND transaction_type = 'expense'
+         AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
+       ), 0),
+       current_month_balance = COALESCE((
+         SELECT SUM(CASE WHEN transaction_type = 'income' THEN base_amount ELSE -base_amount END)
+         FROM transactions 
+         WHERE user_id = $1 
+         AND transaction_date >= $2::date AND transaction_date < ($2::date + INTERVAL '1 month')
+       ), 0) + COALESCE((SELECT monthly_income FROM user_preferences WHERE user_id = $1), 0),
+       last_updated = CURRENT_TIMESTAMP`,
+    [userId, monthStart],
   );
 }

@@ -3,6 +3,7 @@
 import { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth, AuthProvider } from "@/hooks/use-auth";
+import { BalanceProvider } from "@/components/balance-provider";
 import { Sidebar } from "@/components/layout/sidebar";
 import { VoiceButton } from "@/components/voice/voice-button";
 import { CurrencyCalculator } from "@/components/currency-calculator";
@@ -40,7 +41,9 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      <BalanceProvider>
+        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+      </BalanceProvider>
     </AuthProvider>
   );
 }
